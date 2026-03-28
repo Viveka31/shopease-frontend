@@ -32,6 +32,7 @@ import SellerProducts from './pages/seller/SellerProducts';
 import SellerAddProduct from './pages/seller/SellerAddProduct';
 import SellerEditProduct from './pages/seller/SellerEditProduct';
 import SellerOrders from './pages/seller/SellerOrders';
+import SellerStoreProfile from './pages/seller/SellerStoreProfile';
 
 // Route Guards
 const PrivateRoute = ({ children, role }) => {
@@ -86,6 +87,7 @@ function AppRoutes() {
         <Route path="/seller/products" element={<PrivateRoute role="seller"><Layout><SellerProducts /></Layout></PrivateRoute>} />
         <Route path="/seller/products/add" element={<PrivateRoute role="seller"><Layout><SellerAddProduct /></Layout></PrivateRoute>} />
         <Route path="/seller/products/edit/:id" element={<PrivateRoute role="seller"><Layout><SellerEditProduct /></Layout></PrivateRoute>} />
+        <Route path="/seller/store-profile" element={<PrivateRoute role="seller"><Layout><SellerStoreProfile /></Layout></PrivateRoute>} />
         <Route path="/seller/orders" element={<PrivateRoute role="seller"><Layout><SellerOrders /></Layout></PrivateRoute>} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
