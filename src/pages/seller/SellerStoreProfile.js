@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
-import { FiArrowLeft, FiSave, FiStore } from 'react-icons/fi';
+import { FiArrowLeft, FiSave, FiShoppingBag } from 'react-icons/fi';
 import './SellerPages.css';
 
 export default function SellerStoreProfile() {
@@ -70,7 +70,7 @@ export default function SellerStoreProfile() {
     <div className="page">
       <div className="container" style={{ maxWidth: 800 }}>
         <Link to="/seller/dashboard" className="back-link"><FiArrowLeft /> Back to Dashboard</Link>
-        <h1 className="page-heading"><FiStore /> Store Profile</h1>
+        <h1 className="page-heading"><FiShoppingBag /> Store Profile</h1>
 
         <form onSubmit={handleSave}>
           {/* Personal info */}
