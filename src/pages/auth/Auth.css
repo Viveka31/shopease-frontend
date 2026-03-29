@@ -211,3 +211,23 @@
   .auth-brand { display: none; }
   .auth-card { padding: 32px 24px; }
 }
+
+/* ── Password strength bar ──────────────────────────────────────────────── */
+.pw-strength-wrap {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pw-strength-bar {
+  height: 4px;
+  border-radius: var(--radius-full);
+  transition: all 0.3s ease;
+}
+.pw-strength-bar.weak   { width: 33%; background: var(--red);    }
+.pw-strength-bar.medium { width: 66%; background: var(--orange); }
+.pw-strength-bar.strong { width: 100%; background: var(--green); }
+.pw-strength-label { font-size: 12px; font-weight: 600; }
+.pw-strength-label.weak   { color: var(--red);    }
+.pw-strength-label.medium { color: var(--orange); }
+.pw-strength-label.strong { color: var(--green);  }
