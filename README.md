@@ -6,15 +6,6 @@ React 18 e-commerce frontend with full buyer + seller flows, Stripe payments, an
 
 # ShopEase 🛍️
 
-Full-stack fashion e-commerce built with MERN stack.  
-**Backend** (Render) + **Frontend** (Netlify) deployed separately.
-
-```
-shopease-project/
-├── backend/    → Node.js + Express + MongoDB API
-└── frontend/   → React 18 SPA
-```
-
 ## Demo Accounts
 
 | Role | Email | Password |
