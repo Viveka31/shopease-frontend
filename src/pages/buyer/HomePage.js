@@ -24,24 +24,24 @@ const FEATURES = [
 // ── Hero Carousel — auto-slides every 3s ────────────────────────────────────
 const HERO_SLIDES = [
   {
-    src: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&q=80',
-    label: 'Traditional Saree',
+    src: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80',
+    label: 'Street Style',
     tag: '🔥 Trending Now',
   },
   {
-    src: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80',
-    label: 'Ethnic Elegance',
+    src: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80',
+    label: 'Summer Collection',
     tag: '✨ New Arrival',
   },
   {
-    src: 'https://images.unsplash.com/photo-1617627131698-f9d51ec0df38?w=600&q=80',
-    label: 'Festive Collection',
+    src: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80',
+    label: 'Editorial Look',
     tag: '🎉 Season Special',
   },
   {
-    src: 'https://images.unsplash.com/photo-1594938298603-9f8e388c3a41?w=600&q=80',
-    label: 'Bridal Wear',
-    tag: "💫 Editor's Pick",
+    src: 'https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=600&q=80',
+    label: 'Bold & Beautiful',
+    tag: '💫 Editors Pick',
   },
 ];
 
