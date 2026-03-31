@@ -41,7 +41,7 @@ const HERO_SLIDES = [
   {
     src: 'https://images.unsplash.com/photo-1594938298603-9f8e388c3a41?w=600&q=80',
     label: 'Bridal Wear',
-    tag: '💫 Editor's Pick',
+    tag: "💫 Editor's Pick",
   },
 ];
 
