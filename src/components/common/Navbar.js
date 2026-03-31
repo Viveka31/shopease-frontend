@@ -44,7 +44,7 @@ function SellerNavbar() {
     <header className="seller-navbar">
       <div className="container seller-navbar-inner">
         {/* Logo */}
-        <Link to="/seller/dashboard" className="navbar-logo">
+        <Link to="/" className="navbar-logo">
           <span className="logo-icon">S</span>
           <span className="logo-text">ShopEase</span>
           <span className="seller-badge-pill">Seller</span>

@@ -67,7 +67,7 @@ export default function HomePage() {
         </div>
         <div className="container hero-inner">
           <div className="hero-content">
-            <span className="hero-badge">New Season 2024 🔥</span>
+            <span className="hero-badge">New Season 2026 🔥</span>
             <h1 className="hero-title">
               Dress to<br />
               <span className="hero-accent">Impress</span>
@@ -115,7 +115,7 @@ export default function HomePage() {
           <div className="hero-visual">
             <div className="hero-img-frame">
               <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80"
+                src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80"
                 alt="Fashion"
                 className="hero-img"
               />
