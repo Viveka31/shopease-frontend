@@ -74,6 +74,24 @@ function CheckoutForm({ order, onSuccess }) {
   );
 }
 
+// ── Standalone Field — defined OUTSIDE CheckoutPage so it never re-mounts on re-render ──
+function ShippingField({ label, field, placeholder, type = 'text', value, onChange, error }) {
+  return (
+    <div className="form-group">
+      <label className="form-label">{label}</label>
+      <input
+        type={type}
+        className={`form-input ${error ? 'error' : ''}`}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => onChange(field, e.target.value)}
+        autoComplete="off"
+      />
+      {error && <div className="form-error"><FiAlertCircle size={12} /> {error}</div>}
+    </div>
+  );
+}
+
 export default function CheckoutPage() {
   const { cart, totalPrice, clearCart } = useCart();
   const { user }    = useAuth();
@@ -150,19 +168,7 @@ export default function CheckoutPage() {
     navigate('/cart'); return null;
   }
 
-  const Field = ({ label, field, placeholder, type = 'text' }) => (
-    <div className="form-group">
-      <label className="form-label">{label}</label>
-      <input
-        type={type}
-        className={`form-input ${errors[field] ? 'error' : ''}`}
-        placeholder={placeholder}
-        value={shipping[field]}
-        onChange={e => upd(field, e.target.value)}
-      />
-      {errors[field] && <div className="form-error"><FiAlertCircle size={12} /> {errors[field]}</div>}
-    </div>
-  );
+
 
   return (
     <div className="page">
@@ -188,14 +194,14 @@ export default function CheckoutPage() {
                 <h2 className="checkout-section-title">Shipping Address</h2>
                 <form onSubmit={handleAddressSubmit} noValidate>
                   <div className="grid-2">
-                    <Field label="Full Name *"     field="fullName" placeholder="Arjun Kumar" />
-                    <Field label="Phone Number *"  field="phone"    placeholder="+91 98765 43210" type="tel" />
+                    <ShippingField label="Full Name *"     field="fullName"  placeholder="Arjun Kumar"         value={shipping.fullName}  onChange={upd} error={errors.fullName} />
+                    <ShippingField label="Phone Number *"  field="phone"     placeholder="+91 98765 43210" type="tel" value={shipping.phone}     onChange={upd} error={errors.phone} />
                   </div>
-                  <Field label="Street Address *" field="street"  placeholder="42, MG Road, Nungambakkam" />
+                  <ShippingField label="Street Address *" field="street"   placeholder="42, MG Road, Nungambakkam" value={shipping.street}    onChange={upd} error={errors.street} />
                   <div className="grid-3">
-                    <Field label="City *"     field="city"    placeholder="Chennai" />
-                    <Field label="State *"    field="state"   placeholder="Tamil Nadu" />
-                    <Field label="PIN Code *" field="zipCode" placeholder="600001" />
+                    <ShippingField label="City *"      field="city"     placeholder="Chennai"               value={shipping.city}      onChange={upd} error={errors.city} />
+                    <ShippingField label="State *"     field="state"    placeholder="Tamil Nadu"             value={shipping.state}     onChange={upd} error={errors.state} />
+                    <ShippingField label="PIN Code *"  field="zipCode"  placeholder="600001"                 value={shipping.zipCode}   onChange={upd} error={errors.zipCode} />
                   </div>
                   <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
                     {loading ? <><span className="btn-spinner" /> Saving...</> : 'Continue to Payment →'}
