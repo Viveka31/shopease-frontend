@@ -57,7 +57,7 @@ function HeroCarousel() {
 
   return (
     <div className="hero-carousel">
-      <div className="hero-carousel-track" style={{ transform: `translateX(-${current * 100}%)`  }}>
+      <div className="hero-carousel-track" style={{ transform: `translateX(-${current * 25}%)` }}>
         {HERO_SLIDES.map((slide, i) => (
           <div key={i} className="hero-carousel-slide">
             <img src={slide.src} alt={slide.label} className="hero-img" />
