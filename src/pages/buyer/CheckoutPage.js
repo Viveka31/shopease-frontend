@@ -6,7 +6,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import { FiLock, FiArrowLeft } from 'react-icons/fi';
+import { FiLock, FiArrowLeft, FiAlertCircle } from 'react-icons/fi';
 import './CheckoutPage.css';
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY || 'pk_test_placeholder');
@@ -19,35 +19,38 @@ const CARD_STYLE = {
 };
 
 function CheckoutForm({ order, onSuccess }) {
-  const stripe = useStripe();
-  const elements = useElements();
+  const stripe      = useStripe();
+  const elements    = useElements();
   const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState('');
+  const [cardError,  setCardError]  = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
-    setProcessing(true); setError('');
+    setProcessing(true);
+    setCardError('');
     try {
       const { data } = await api.post('/payments/create-payment-intent', { orderId: order._id });
-      const result = await stripe.confirmCardPayment(data.clientSecret, {
+      const result   = await stripe.confirmCardPayment(data.clientSecret, {
         payment_method: { card: elements.getElement(CardElement) },
       });
       if (result.error) {
-        setError(result.error.message);
+        setCardError(result.error.message);
       } else if (result.paymentIntent.status === 'succeeded') {
         await api.put(`/payments/${order._id}/pay`, {
           paymentResult: {
-            id: result.paymentIntent.id,
-            status: result.paymentIntent.status,
+            id:          result.paymentIntent.id,
+            status:      result.paymentIntent.status,
             update_time: new Date().toISOString(),
           },
         });
         onSuccess();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Payment failed');
-    } finally { setProcessing(false); }
+      setCardError(err.response?.data?.message || 'Payment failed. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -57,69 +60,116 @@ function CheckoutForm({ order, onSuccess }) {
         <div className="card-element-wrap">
           <CardElement options={CARD_STYLE} />
         </div>
-        <div className="card-hint">Use: 4242 4242 4242 4242 | Any future date | Any CVC</div>
+        <div className="card-hint">Test card: 4242 4242 4242 4242 | Any future date | Any CVC</div>
       </div>
-      {error && <div className="alert alert-error">{error}</div>}
+      {cardError && (
+        <div className="alert alert-error" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FiAlertCircle /> {cardError}
+        </div>
+      )}
       <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={processing || !stripe}>
-        <FiLock /> {processing ? 'Processing...' : `Pay ₹${order.totalPrice?.toLocaleString()}`}
+        <FiLock /> {processing ? 'Processing payment...' : `Pay ₹${order.totalPrice?.toLocaleString()}`}
       </button>
     </form>
   );
 }
 
 export default function CheckoutPage() {
-  const { cart, totalPrice } = useCart();
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { cart, totalPrice, clearCart } = useCart();
+  const { user }    = useAuth();
+  const navigate    = useNavigate();
 
-  const [step, setStep] = useState(1); // 1=address, 2=payment
-  const [order, setOrder] = useState(null);
+  const [step,    setStep]    = useState(1);
+  const [order,   setOrder]   = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errors,  setErrors]  = useState({});
 
   const [shipping, setShipping] = useState({
-    fullName: user?.name || '',
-    phone: user?.phone || '',
-    street: user?.address?.street || '',
-    city: user?.address?.city || '',
-    state: user?.address?.state || '',
-    zipCode: user?.address?.zipCode || '',
-    country: 'India',
+    fullName: user?.name    || '',
+    phone:    user?.phone   || '',
+    street:   user?.address?.street  || '',
+    city:     user?.address?.city    || '',
+    state:    user?.address?.state   || '',
+    zipCode:  user?.address?.zipCode || '',
+    country:  'India',
   });
 
-  const shippingPrice = totalPrice > 999 ? 0 : 99;
-  const taxPrice = Math.round(totalPrice * 0.18 * 100) / 100;
-  const grandTotal = totalPrice + shippingPrice + taxPrice;
+  // ── Form validation ──────────────────────────────────────────────────────────
+  const validateShipping = () => {
+    const e = {};
+    if (!shipping.fullName.trim())        e.fullName = 'Full name is required';
+    if (!shipping.phone.trim())           e.phone    = 'Phone number is required';
+    else if (!/^\+?[\d\s\-]{8,15}$/.test(shipping.phone.trim())) e.phone = 'Enter a valid phone number';
+    if (!shipping.street.trim())          e.street   = 'Street address is required';
+    if (!shipping.city.trim())            e.city     = 'City is required';
+    if (!shipping.state.trim())           e.state    = 'State is required';
+    if (!shipping.zipCode.trim())         e.zipCode  = 'PIN code is required';
+    else if (!/^\d{6}$/.test(shipping.zipCode.trim())) e.zipCode = 'Enter a valid 6-digit PIN code';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const upd = (key, val) => {
+    setShipping(s => ({ ...s, [key]: val }));
+    if (errors[key]) setErrors(e => ({ ...e, [key]: '' }));
+  };
 
   const handleAddressSubmit = async (e) => {
     e.preventDefault();
-    const required = ['fullName', 'phone', 'street', 'city', 'state', 'zipCode'];
-    for (const f of required) {
-      if (!shipping[f]) { toast.error(`Please fill in ${f}`); return; }
+    if (!validateShipping()) {
+      toast.error('Please fix the errors below');
+      return;
     }
     setLoading(true);
     try {
-      const { data } = await api.post('/orders', { shippingAddress: shipping, paymentMethod: 'stripe' });
+      const { data } = await api.post('/orders', {
+        shippingAddress: shipping,
+        paymentMethod: 'stripe',
+      });
       setOrder(data.order);
       setStep(2);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create order');
-    } finally { setLoading(false); }
+      toast.error(err.response?.data?.message || 'Failed to place order');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handlePaymentSuccess = () => {
+  // ── After successful payment: clear cart state + navigate ────────────────────
+  const handlePaymentSuccess = async () => {
     toast.success('Payment successful! 🎉');
+    await clearCart(); // clears both DB and frontend state
     navigate(`/order-confirmation/${order._id}`);
   };
+
+  const shippingPrice = totalPrice > 999 ? 0 : 99;
+  const taxPrice      = Math.round(totalPrice * 0.18 * 100) / 100;
+  const grandTotal    = totalPrice + shippingPrice + taxPrice;
 
   if (!cart?.items?.length && !order) {
     navigate('/cart'); return null;
   }
+
+  const Field = ({ label, field, placeholder, type = 'text' }) => (
+    <div className="form-group">
+      <label className="form-label">{label}</label>
+      <input
+        type={type}
+        className={`form-input ${errors[field] ? 'error' : ''}`}
+        placeholder={placeholder}
+        value={shipping[field]}
+        onChange={e => upd(field, e.target.value)}
+      />
+      {errors[field] && <div className="form-error"><FiAlertCircle size={12} /> {errors[field]}</div>}
+    </div>
+  );
 
   return (
     <div className="page">
       <div className="container">
         <h1 className="page-heading">Checkout</h1>
 
+        {/* Steps */}
         <div className="checkout-steps">
           {['Shipping Address', 'Payment'].map((s, i) => (
             <div key={s} className={`checkout-step ${step === i + 1 ? 'active' : ''} ${step > i + 1 ? 'done' : ''}`}>
@@ -131,45 +181,30 @@ export default function CheckoutPage() {
 
         <div className="checkout-layout">
           <div className="checkout-main">
+
+            {/* Step 1 — Address */}
             {step === 1 && (
               <div className="card checkout-card">
                 <h2 className="checkout-section-title">Shipping Address</h2>
-                <form onSubmit={handleAddressSubmit}>
+                <form onSubmit={handleAddressSubmit} noValidate>
                   <div className="grid-2">
-                    <div className="form-group">
-                      <label className="form-label">Full Name</label>
-                      <input className="form-input" value={shipping.fullName} onChange={e => setShipping({...shipping, fullName: e.target.value})} required />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Phone Number</label>
-                      <input className="form-input" value={shipping.phone} onChange={e => setShipping({...shipping, phone: e.target.value})} required />
-                    </div>
+                    <Field label="Full Name *"     field="fullName" placeholder="Arjun Kumar" />
+                    <Field label="Phone Number *"  field="phone"    placeholder="+91 98765 43210" type="tel" />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Street Address</label>
-                    <input className="form-input" value={shipping.street} onChange={e => setShipping({...shipping, street: e.target.value})} required />
-                  </div>
+                  <Field label="Street Address *" field="street"  placeholder="42, MG Road, Nungambakkam" />
                   <div className="grid-3">
-                    <div className="form-group">
-                      <label className="form-label">City</label>
-                      <input className="form-input" value={shipping.city} onChange={e => setShipping({...shipping, city: e.target.value})} required />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">State</label>
-                      <input className="form-input" value={shipping.state} onChange={e => setShipping({...shipping, state: e.target.value})} required />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">PIN Code</label>
-                      <input className="form-input" value={shipping.zipCode} onChange={e => setShipping({...shipping, zipCode: e.target.value})} required />
-                    </div>
+                    <Field label="City *"     field="city"    placeholder="Chennai" />
+                    <Field label="State *"    field="state"   placeholder="Tamil Nadu" />
+                    <Field label="PIN Code *" field="zipCode" placeholder="600001" />
                   </div>
                   <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                    {loading ? 'Saving...' : 'Continue to Payment →'}
+                    {loading ? <><span className="btn-spinner" /> Saving...</> : 'Continue to Payment →'}
                   </button>
                 </form>
               </div>
             )}
 
+            {/* Step 2 — Payment */}
             {step === 2 && order && (
               <div className="card checkout-card">
                 <div className="payment-header">
@@ -192,7 +227,10 @@ export default function CheckoutPage() {
             <div className="checkout-items">
               {(cart?.items || []).map(item => (
                 <div key={item._id} className="checkout-item">
-                  <img src={item.product?.images?.[0] || `https://picsum.photos/seed/${item.product?._id}/80/80`} alt={item.name} />
+                  <img
+                    src={item.product?.images?.[0] || `https://picsum.photos/seed/${item.product?._id}/80/80`}
+                    alt={item.name}
+                  />
                   <div className="checkout-item-info">
                     <div className="checkout-item-name">{item.name}</div>
                     {item.size && <div className="checkout-item-meta">Size: {item.size}</div>}
@@ -205,7 +243,12 @@ export default function CheckoutPage() {
             <div className="divider" />
             <div className="summary-rows">
               <div className="summary-row"><span>Subtotal</span><span>₹{totalPrice.toLocaleString()}</span></div>
-              <div className="summary-row"><span>Shipping</span><span className={shippingPrice === 0 ? 'text-green' : ''}>{shippingPrice === 0 ? 'FREE' : `₹${shippingPrice}`}</span></div>
+              <div className="summary-row">
+                <span>Shipping</span>
+                <span className={shippingPrice === 0 ? 'text-green' : ''}>
+                  {shippingPrice === 0 ? 'FREE' : `₹${shippingPrice}`}
+                </span>
+              </div>
               <div className="summary-row"><span>GST (18%)</span><span>₹{taxPrice.toLocaleString()}</span></div>
               <div className="summary-total"><span>Total</span><span>₹{grandTotal.toLocaleString()}</span></div>
             </div>

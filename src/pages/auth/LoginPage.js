@@ -1,31 +1,48 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import './Auth.css';
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const from = location.state?.from?.pathname || '/';
+  const { login }    = useAuth();
+  const navigate     = useNavigate();
+  const location     = useLocation();
+  const from         = location.state?.from?.pathname || '/';
 
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [showPw, setShowPw] = useState(false);
+  const [form,    setForm]    = useState({ email: '', password: '' });
+  const [showPw,  setShowPw]  = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [errors,  setErrors]  = useState({});
+  const [apiError, setApiError] = useState('');
+
+  const validate = () => {
+    const e = {};
+    if (!form.email.trim())               e.email    = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email address';
+    if (!form.password)                   e.password = 'Password is required';
+    else if (form.password.length < 6)    e.password = 'Password must be at least 6 characters';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const upd = (key, val) => {
+    setForm(f => ({ ...f, [key]: val }));
+    if (errors[key])  setErrors(e => ({ ...e, [key]: '' }));
+    if (apiError)     setApiError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    if (!validate()) return;
     setLoading(true);
     try {
       const user = await login(form.email, form.password);
       toast.success(`Welcome back, ${user.name.split(' ')[0]}!`);
       navigate(user.role === 'seller' ? '/seller/dashboard' : from, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setApiError(err.response?.data?.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -51,24 +68,30 @@ export default function LoginPage() {
           <h1 className="auth-title">Welcome back</h1>
           <p className="auth-subtitle">Sign in to continue shopping</p>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          {apiError && (
+            <div className="alert alert-error">
+              <FiAlertCircle /> {apiError}
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form onSubmit={handleSubmit} className="auth-form" noValidate>
+            {/* Email */}
             <div className="form-group">
               <label className="form-label">Email Address</label>
               <div className="input-icon-wrap">
                 <FiMail className="input-icon" />
                 <input
                   type="email"
-                  className="form-input with-icon"
+                  className={`form-input with-icon ${errors.email ? 'error' : ''}`}
                   placeholder="you@example.com"
                   value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  required
+                  onChange={e => upd('email', e.target.value)}
                 />
               </div>
+              {errors.email && <div className="form-error"><FiAlertCircle size={12} /> {errors.email}</div>}
             </div>
 
+            {/* Password */}
             <div className="form-group">
               <div className="label-row">
                 <label className="form-label">Password</label>
@@ -78,20 +101,20 @@ export default function LoginPage() {
                 <FiLock className="input-icon" />
                 <input
                   type={showPw ? 'text' : 'password'}
-                  className="form-input with-icon with-icon-right"
+                  className={`form-input with-icon with-icon-right ${errors.password ? 'error' : ''}`}
                   placeholder="Your password"
                   value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  required
+                  onChange={e => upd('password', e.target.value)}
                 />
-                <button type="button" className="input-icon-right" onClick={() => setShowPw(!showPw)}>
+                <button type="button" className="input-icon-right" onClick={() => setShowPw(v => !v)}>
                   {showPw ? <FiEyeOff /> : <FiEye />}
                 </button>
               </div>
+              {errors.password && <div className="form-error"><FiAlertCircle size={12} /> {errors.password}</div>}
             </div>
 
             <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading}>
-              {loading ? <><span className="btn-spinner" />Signing in...</> : 'Sign In'}
+              {loading ? <><span className="btn-spinner" /> Signing in...</> : 'Sign In'}
             </button>
           </form>
 
