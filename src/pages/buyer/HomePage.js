@@ -21,6 +21,73 @@ const FEATURES = [
   { icon: <FiHeadphones />,  title: '24/7 Support',    desc: 'Dedicated customer care'     },
 ];
 
+// ── Hero Carousel — auto-slides every 3s ────────────────────────────────────
+const HERO_SLIDES = [
+  {
+    src: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=600&q=80',
+    label: 'Traditional Saree',
+    tag: '🔥 Trending Now',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80',
+    label: 'Ethnic Elegance',
+    tag: '✨ New Arrival',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1617627131698-f9d51ec0df38?w=600&q=80',
+    label: 'Festive Collection',
+    tag: '🎉 Season Special',
+  },
+  {
+    src: 'https://images.unsplash.com/photo-1594938298603-9f8e388c3a41?w=600&q=80',
+    label: 'Bridal Wear',
+    tag: '💫 Editor's Pick',
+  },
+];
+
+function HeroCarousel() {
+  const [current, setCurrent] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrent(prev => (prev + 1) % HERO_SLIDES.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="hero-carousel">
+      <div className="hero-carousel-track" style={{ transform: `translateX(-${current * 100}%)`  }}>
+        {HERO_SLIDES.map((slide, i) => (
+          <div key={i} className="hero-carousel-slide">
+            <img src={slide.src} alt={slide.label} className="hero-img" />
+          </div>
+        ))}
+      </div>
+
+      {/* Badge */}
+      <div className="hero-img-badge">
+        <span>{HERO_SLIDES[current].tag.split(' ')[0]}</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 13 }}>{HERO_SLIDES[current].tag.slice(3)}</div>
+          <div style={{ fontSize: 11, color: 'var(--gray-500)' }}>{HERO_SLIDES[current].label}</div>
+        </div>
+      </div>
+
+      {/* Dot indicators */}
+      <div className="hero-carousel-dots">
+        {HERO_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            className={`hero-dot ${i === current ? 'active' : ''}`}
+            onClick={() => setCurrent(i)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [featured,    setFeatured]    = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
@@ -113,20 +180,7 @@ export default function HomePage() {
             )}
           </div>
           <div className="hero-visual">
-            <div className="hero-img-frame">
-              <img
-                src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=600&q=80"
-                alt="Fashion"
-                className="hero-img"
-              />
-              <div className="hero-img-badge">
-                <span>🔥</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 13 }}>Trending Now</div>
-                  <div style={{ fontSize: 11, color: 'var(--gray-500)' }}>Summer Collection</div>
-                </div>
-              </div>
-            </div>
+            <HeroCarousel />
           </div>
         </div>
       </section>
